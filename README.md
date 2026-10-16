@@ -30,9 +30,10 @@ unit_scores.npz, metrics.json}`.
 ## Run (cluster)
 
 ```bash
-rsync -a --exclude work ~/projects/phd/bci-proxies/ udesa-cluster:~/projects/bci-proxies/
+# code goes through GitHub; -A forwards the laptop's key so the cluster can pull
+git push && ssh -A udesa-cluster 'cd ~/projects/bci-proxies && git pull --ff-only'
 ssh udesa-cluster
-cd ~/projects/bci-proxies
+cd ~/projects/bci-proxies                # first time: git clone git@github.com:fedemoss/bci-proxies.git
 SITE=pinky bash setup.sh                 # login node: env + link official.npz
 LIMIT=64 bash run/submit_extract.sh      # smoke test
 bash run/submit_extract.sh               # all families (CPU jobs)
