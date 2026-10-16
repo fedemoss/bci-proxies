@@ -1,0 +1,10 @@
+numpy
+scipy
+pandas
+scikit-learn
+joblib
+antropy>=0.1.6
+xgboost>=2.0
+pycatch22
+PyWavelets
+matplotlib
