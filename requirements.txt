@@ -4,7 +4,7 @@ pandas
 scikit-learn
 joblib
 antropy>=0.1.6
-xgboost>=2.0
+xgboost-cpu>=2.0   # CPU-only build: the CUDA one dies on GPU nodes without a --gres GPU
 pycatch22
 PyWavelets
 matplotlib
