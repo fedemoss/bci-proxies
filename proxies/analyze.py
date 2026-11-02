@@ -147,15 +147,17 @@ def main():
     ap.add_argument("--top", type=int, default=20)
     ap.add_argument("--n-cluster", type=int, default=300)
     ap.add_argument("--r", type=float, default=0.9)
+    ap.add_argument("--out", help="default $RESULTS/analysis (run all) or analysis_<run>")
     a = ap.parse_args()
-    out = os.path.join(a.results, "analysis")
+    out = a.out or os.path.join(a.results, "analysis" if a.run == "all" else f"analysis_{a.run}")
     os.makedirs(out, exist_ok=True)
 
     s = summary(a.results)
     s.to_csv(os.path.join(out, "summary.csv"), index=False)
     print(s[["run", "n_features", *[f"{k}_mean" for k in MODELS],
              "general_minus_pooled", "wilcoxon_p"]].round(3).to_string(index=False))
-    plot_users(a.results, ["all", "all_strict"], os.path.join(out, "loo_users.png"))
+    runs = [r for r in (a.run, f"{a.run}_strict") if os.path.isdir(os.path.join(a.results, r))]
+    plot_users(a.results, runs, os.path.join(out, "loo_users.png"))
 
     run = os.path.join(a.results, a.run)
     gen = pd.read_csv(os.path.join(run, "generality.csv"))

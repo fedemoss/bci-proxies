@@ -24,11 +24,15 @@ With sessions as users, a fold that holds out P04 session 1 still trains on
 P04 sessions 2-3. --strict-subject drops the held-out user's other sessions
 from the training fold and from the generality count: the cross-subject
 version of the same question.
+
+--exclude-frontal drops every feature that touches an AF or F electrode or a
+frontal region (the eye-artifact check, see proxies.eyecheck).
 """
 
 import argparse
 import json
 import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -39,6 +43,14 @@ from . import data, features
 from .regions import CLASSES
 
 TOPK = [50, 100, 500]
+FRONTAL = {"AF3", "AF4", "F1", "F2", "F3", "F4", "F5", "F6", "Fz"}
+
+
+def touches_frontal(name):
+    """The location is the last field: a channel, a region, or several joined
+    by '-' (pairs) or '|' (triplets)."""
+    loc = name.split(":")[-1]
+    return any(t in FRONTAL or "frontal" in t for t in re.split(r"[-|]", loc))
 
 
 def load_features(families, root):
@@ -110,6 +122,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--families", nargs="+", default=features.DEFAULT)
     ap.add_argument("--strict-subject", action="store_true")
+    ap.add_argument("--exclude-frontal", action="store_true")
     ap.add_argument("--k-keep", type=int, default=2000, help="F-filter size of the `all` model")
     ap.add_argument("--n-general", type=int, default=100, help="features in `general`/`pooled`")
     ap.add_argument("--gen-k", type=int, default=100, help="top-k defining generality in the fold")
@@ -125,6 +138,10 @@ def main():
     meta, y = w.meta, w.meta.y.to_numpy()
     meta["unit"] = meta.subject + "/" + meta.session
     F, names = load_features(a.families, a.features)
+    if a.exclude_frontal:
+        keep = np.array([not touches_frontal(n) for n in names])
+        print(f"[eval] --exclude-frontal: {(~keep).sum()} features dropped")
+        F, names = F[:, keep], names[keep]
     ok = (np.isfinite(F).mean(0) > 0.8) & (np.nanstd(F, 0) > 0)
     F, names = F[:, ok], names[ok]
     units = sorted(meta.unit.unique())
